@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:new_music_player/providers/mode_provider.dart';
+import 'package:new_music_player/screens/player.dart';
 import 'package:new_music_player/widgets/drawer.dart';
 
-class PlayerScreen extends ConsumerWidget {
-  const PlayerScreen({super.key});
+class PlaylistScreen extends ConsumerWidget {
+  const PlaylistScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,6 +57,7 @@ class PlayerScreen extends ConsumerWidget {
           itemCount: 3,
           itemBuilder: (context, index) {
             return ListTile(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PlayerScreen(),)),
               leading: Container(
                 width: 50,
                 height: 50,

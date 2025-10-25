@@ -32,8 +32,9 @@ class SideDrawer extends ConsumerWidget {
                   color: Colors.grey,
                 ),
               ),
-              const ListTile(
-                title: Text(
+              ListTile(
+                onTap: () => Navigator.pop(context),
+                title: const Text(
                   'HOME',
                   style: TextStyle(
                     color: Colors.grey,

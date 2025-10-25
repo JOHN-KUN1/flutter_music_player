@@ -6,7 +6,7 @@ void main() {
   runApp(
     const ProviderScope(
       child: MaterialApp(
-        home: PlayerScreen(),
+        home: PlaylistScreen(),
       ),
     ),
   );
