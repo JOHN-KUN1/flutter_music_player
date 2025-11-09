@@ -1,12 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:new_music_player/data/songs.dart';
 import 'package:new_music_player/providers/mode_provider.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:new_music_player/providers/song_started_provider.dart';
 
-class PlayerScreen extends ConsumerWidget {
+class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
+}
+
+class _PlayerScreenState extends ConsumerState<PlayerScreen> {
+  final player = AudioPlayer(); 
+
+  void setAndPlayInitialMusic() async {
+    final duration = await player.setUrl(
+      'https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3',
+    );
+    player.play();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setAndPlayInitialMusic();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    player.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -86,7 +115,7 @@ class PlayerScreen extends ConsumerWidget {
                                   width: double.infinity,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10),
-                                    image: DecorationImage(
+                                    image: const DecorationImage(
                                       image: AssetImage('assets/ocean.jpg'),
                                       fit: BoxFit.cover,
                                     ),
@@ -120,7 +149,7 @@ class PlayerScreen extends ConsumerWidget {
                                           ),
                                         ),
                                       ),
-                                      Flexible(
+                                      const Flexible(
                                         child: Text(
                                           'Acid',
                                           style: TextStyle(
@@ -129,12 +158,6 @@ class PlayerScreen extends ConsumerWidget {
                                           ),
                                         ),
                                       ),
-
-                                      // const Expanded(
-                                      //   child: SizedBox(
-                                      //     width: double.infinity,
-                                      //   ),
-                                      // ),
                                     ],
                                   ),
                                   const Expanded(
@@ -221,33 +244,61 @@ class PlayerScreen extends ConsumerWidget {
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
-                            child: Icon(Icons.skip_previous, color: ref.watch(isDarkmodeProvider) ? Colors.white : Colors.black,),
+                            child: Icon(
+                              Icons.skip_previous,
+                              color: ref.watch(isDarkmodeProvider)
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
                           ),
                         ),
                       ),
                     ),
                     Expanded(
-                      child: Card(
-                        clipBehavior: Clip.hardEdge,
-                        elevation: 10,
-                        child: Container(
-                          decoration: ref.watch(isDarkmodeProvider)
-                              ? const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Color.fromARGB(255, 58, 58, 58),
-                                      Colors.black,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                )
-                              : null,
-                          width: double.infinity,
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              child: Icon(Icons.play_arrow,color: ref.watch(isDarkmodeProvider) ? Colors.white : Colors.black,),
+                      child: InkWell(
+                        onTap: () async {
+                          ref.watch(songStartedProvider)
+                              ? player.pause()
+                              : player.play();
+                          
+                          ref.read(songStartedProvider.notifier).changeSongStartedMode(!ref.watch(songStartedProvider));
+                        },
+                        child: Card(
+                          clipBehavior: Clip.hardEdge,
+                          elevation: 10,
+                          child: Container(
+                            decoration: ref.watch(isDarkmodeProvider)
+                                ? const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color.fromARGB(255, 58, 58, 58),
+                                        Colors.black,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  )
+                                : null,
+                            width: double.infinity,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20,
+                                ),
+                                child: ref.watch(songStartedProvider)
+                                    ? Icon(
+                                        Icons.pause,
+                                        color: ref.watch(isDarkmodeProvider)
+                                            ? Colors.white
+                                            : Colors.black,
+                                      )
+                                    : Icon(
+                                        Icons.play_arrow,
+                                        color: ref.watch(isDarkmodeProvider)
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                              ),
                             ),
                           ),
                         ),
@@ -272,7 +323,12 @@ class PlayerScreen extends ConsumerWidget {
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
-                            child: Icon(Icons.skip_next, color: ref.watch(isDarkmodeProvider) ? Colors.white : Colors.black,),
+                            child: Icon(
+                              Icons.skip_next,
+                              color: ref.watch(isDarkmodeProvider)
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
                           ),
                         ),
                       ),
