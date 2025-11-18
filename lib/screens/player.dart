@@ -6,32 +6,48 @@ import 'package:just_audio/just_audio.dart';
 import 'package:new_music_player/providers/song_started_provider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
-  const PlayerScreen({super.key});
+  const PlayerScreen({super.key, required this.songIndex});
+
+  final int songIndex;
 
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
-  final player = AudioPlayer(); 
+  final player = AudioPlayer();
 
   void setAndPlayInitialMusic() async {
-    final duration = await player.setUrl(
-      'https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3',
+    final playlist = <AudioSource>[
+      AudioSource.uri(Uri.parse('https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3')),
+      AudioSource.uri(Uri.parse('https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3')),
+      AudioSource.uri(Uri.parse('https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg')),
+    ];
+    // Load the playlist
+    await player.setAudioSources(
+      playlist,
+      initialIndex: 0,
+      initialPosition: Duration.zero, // Load each item just in time
+      shuffleOrder: DefaultShuffleOrder(), // Customise the shuffle algorithm
     );
-    player.play();
+    if (widget.songIndex != player.currentIndex){
+      player.pause();
+      player.seek(Duration.zero,index: widget.songIndex);  
+      player.play();
+    }else{
+      if (player.playing){
+        print('----------------ooooo');
+        return;
+      }else{
+        player.play();
+      }
+    }
   }
 
   @override
   void initState() {
     super.initState();
     setAndPlayInitialMusic();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    player.dispose();
   }
 
   @override
@@ -260,8 +276,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           ref.watch(songStartedProvider)
                               ? player.pause()
                               : player.play();
-                          
-                          ref.read(songStartedProvider.notifier).changeSongStartedMode(!ref.watch(songStartedProvider));
+
+                          ref
+                              .read(songStartedProvider.notifier)
+                              .changeSongStartedMode(
+                                !ref.watch(songStartedProvider),
+                              );
                         },
                         child: Card(
                           clipBehavior: Clip.hardEdge,

@@ -57,7 +57,7 @@ class PlaylistScreen extends ConsumerWidget {
           itemCount: 3,
           itemBuilder: (context, index) {
             return ListTile(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PlayerScreen(),)),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(songIndex: index,),)),
               leading: Container(
                 width: 50,
                 height: 50,
