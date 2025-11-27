@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:new_music_player/data/songs.dart';
 import 'package:new_music_player/providers/mode_provider.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:new_music_player/providers/player_provider.dart';
 import 'package:new_music_player/providers/song_started_provider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -15,38 +16,59 @@ class PlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
-  final player = AudioPlayer();
+  var songPlaying = true;
 
   void setAndPlayInitialMusic() async {
-    final playlist = <AudioSource>[
-      AudioSource.uri(Uri.parse('https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3')),
-      AudioSource.uri(Uri.parse('https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3')),
-      AudioSource.uri(Uri.parse('https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg')),
-    ];
-    // Load the playlist
-    await player.setAudioSources(
-      playlist,
-      initialIndex: 0,
-      initialPosition: Duration.zero, // Load each item just in time
-      shuffleOrder: DefaultShuffleOrder(), // Customise the shuffle algorithm
-    );
-    if (widget.songIndex != player.currentIndex){
-      player.pause();
-      player.seek(Duration.zero,index: widget.songIndex);  
-      player.play();
-    }else{
-      if (player.playing){
-        print('----------------ooooo');
-        return;
-      }else{
-        player.play();
+    if (ref.watch(playerProvider).audioSource == null) {
+      final playlist = <AudioSource>[
+        AudioSource.uri(
+          Uri.parse(
+            'https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3',
+          ),
+        ),
+        AudioSource.uri(
+          Uri.parse(
+            'https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3',
+          ),
+        ),
+        AudioSource.uri(
+          Uri.parse(
+            'https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg',
+          ),
+        ),
+      ];
+      await ref
+          .watch(playerProvider)
+          .setAudioSources(
+            playlist,
+            initialIndex: widget.songIndex,
+            initialPosition: Duration.zero, // Load each item just in time
+            shuffleOrder:
+                DefaultShuffleOrder(), // Customise the shuffle algorithm
+          );
+      await ref.watch(playerProvider).play();
+    } else {
+      // Load the playlist
+      if (widget.songIndex != ref.watch(playerProvider).currentIndex) {
+        await ref.watch(playerProvider).pause();
+        await ref
+            .watch(playerProvider)
+            .seek(Duration.zero, index: widget.songIndex);
+        await ref.watch(playerProvider).play();
+      } else {
+        if (ref.watch(playerProvider).playing) {
+          return;
+        } else {
+          await ref.watch(playerProvider).play();
+        }
       }
     }
   }
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
     setAndPlayInitialMusic();
   }
 
@@ -273,15 +295,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     Expanded(
                       child: InkWell(
                         onTap: () async {
-                          ref.watch(songStartedProvider)
-                              ? player.pause()
-                              : player.play();
+                          songPlaying
+                              ? ref.watch(playerProvider).pause()
+                              : ref.watch(playerProvider).play();
 
-                          ref
-                              .read(songStartedProvider.notifier)
-                              .changeSongStartedMode(
-                                !ref.watch(songStartedProvider),
-                              );
+                          setState(() {
+                            songPlaying = !songPlaying;
+                          });
                         },
                         child: Card(
                           clipBehavior: Clip.hardEdge,
@@ -305,7 +325,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 20,
                                 ),
-                                child: ref.watch(songStartedProvider)
+                                child: songPlaying
                                     ? Icon(
                                         Icons.pause,
                                         color: ref.watch(isDarkmodeProvider)
