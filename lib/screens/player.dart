@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:new_music_player/data/songs.dart';
 import 'package:new_music_player/providers/mode_provider.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:new_music_player/providers/player_provider.dart';
-import 'package:new_music_player/providers/song_started_provider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen({super.key, required this.songIndex});
@@ -16,7 +14,9 @@ class PlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
-  var songPlaying = true;
+  bool songPlaying = true;
+  double _currentSliderValue = 0;
+
 
   void setAndPlayInitialMusic() async {
     if (ref.watch(playerProvider).audioSource == null) {
@@ -74,6 +74,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -221,7 +222,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 15, bottom: 10),
+                padding: const EdgeInsets.only(top: 15, bottom: 5),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -243,16 +244,20 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         color: Colors.grey,
                       ),
                     ),
-                    Text(
-                      '3:00',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
+                    // Text(
+                    //   '${ref.watch(playerProvider).duration.toString().substring(2,4)}:${ref.watch(playerProvider).duration.toString().substring(5,7)}',
+                    //   style: TextStyle(fontSize: 14, color: Colors.grey),
+                    // ),
                   ],
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 15.0),
-                child: Text('seek goes here'),
+                padding: const EdgeInsets.only(bottom: 10.0, left: 20.0, right: 20.0),
+                child: Slider(value: _currentSliderValue, onChanged: (value) {
+                  setState(() {
+                    _currentSliderValue = value;
+                  });
+                },),
               ),
               Padding(
                 padding: const EdgeInsets.only(
@@ -263,30 +268,43 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Card(
-                      clipBehavior: Clip.hardEdge,
-                      elevation: 10,
-                      child: Container(
-                        decoration: ref.watch(isDarkmodeProvider)
-                            ? const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color.fromARGB(255, 58, 58, 58),
-                                    Colors.black,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              )
-                            : null,
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Icon(
-                              Icons.skip_previous,
-                              color: ref.watch(isDarkmodeProvider)
-                                  ? Colors.white
-                                  : Colors.black,
+                    InkWell(
+                      onTap: () async {
+                        await ref.watch(playerProvider).seekToPrevious();
+                        if (ref.watch(playerProvider).playing){
+                          return;
+                        }else{
+                          setState(() {
+                            songPlaying = !songPlaying;
+                          });
+                          ref.watch(playerProvider).play();
+                        }
+                      },
+                      child: Card(
+                        clipBehavior: Clip.hardEdge,
+                        elevation: 10,
+                        child: Container(
+                          decoration: ref.watch(isDarkmodeProvider)
+                              ? const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Color.fromARGB(255, 58, 58, 58),
+                                      Colors.black,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                )
+                              : null,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Icon(
+                                Icons.skip_previous,
+                                color: ref.watch(isDarkmodeProvider)
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
                             ),
                           ),
                         ),
@@ -344,30 +362,43 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         ),
                       ),
                     ),
-                    Card(
-                      clipBehavior: Clip.hardEdge,
-                      elevation: 10,
-                      child: Container(
-                        decoration: ref.watch(isDarkmodeProvider)
-                            ? const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color.fromARGB(255, 58, 58, 58),
-                                    Colors.black,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              )
-                            : null,
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Icon(
-                              Icons.skip_next,
-                              color: ref.watch(isDarkmodeProvider)
-                                  ? Colors.white
-                                  : Colors.black,
+                    InkWell(
+                      onTap: () async {
+                        await ref.watch(playerProvider).seekToNext();
+                        if (ref.watch(playerProvider).playing){
+                          return;
+                        }else{
+                          setState(() {
+                            songPlaying = !songPlaying;
+                          });
+                          ref.watch(playerProvider).play();
+                        }
+                      },
+                      child: Card(
+                        clipBehavior: Clip.hardEdge,
+                        elevation: 10,
+                        child: Container(
+                          decoration: ref.watch(isDarkmodeProvider)
+                              ? const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Color.fromARGB(255, 58, 58, 58),
+                                      Colors.black,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                )
+                              : null,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Icon(
+                                Icons.skip_next,
+                                color: ref.watch(isDarkmodeProvider)
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
                             ),
                           ),
                         ),
