@@ -16,7 +16,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool songPlaying = true;
   double _currentSliderValue = 0;
-
+  double? songD;
 
   void setAndPlayInitialMusic() async {
     if (ref.watch(playerProvider).audioSource == null) {
@@ -63,6 +63,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         }
       }
     }
+    // var duration = await ref.watch(playerProvider).positionStream.last;
+    // songD = duration.inSeconds.toDouble();
   }
 
   @override
@@ -74,7 +76,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -252,12 +253,51 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 10.0, left: 20.0, right: 20.0),
-                child: Slider(value: _currentSliderValue, onChanged: (value) {
-                  setState(() {
-                    _currentSliderValue = value;
-                  });
-                },),
+                padding: const EdgeInsets.only(
+                  bottom: 10.0,
+                  left: 20.0,
+                  right: 20.0,
+                ),
+
+                // child: Slider(value: _currentSliderValue, onChanged: (value) {
+                //   setState(() {
+                //     ref.watch(playerProvider).positionStream
+                //     _currentSliderValue = value;
+
+                //   });
+                // },),
+
+                //TODO: MAKE IT SO THAT WHEN THE SEEK SLIDER IS MOVED AND THE MUSIC CONTINUES PLAYING 
+                //THE SEEK SLIDER ALSO ANIMATES THE PLAY PROGRESS TOO.
+                
+                child: StreamBuilder(
+                  stream: ref.watch(playerProvider).positionStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Slider(
+                        value:
+                            songD ?? snapshot.data?.inSeconds.toDouble() ?? 0.0,
+                        max:
+                            ref
+                                .watch(playerProvider)
+                                .duration
+                                ?.inSeconds
+                                .toDouble() ??
+                            800000,
+                        onChanged: (value) async {
+                          await ref
+                              .watch(playerProvider)
+                              .seek(Duration(seconds: value.toInt()));
+                          setState(() {
+                            songD = snapshot.data?.inSeconds.toDouble();
+                          });
+                        },
+                      );
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  },
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.only(
@@ -271,9 +311,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     InkWell(
                       onTap: () async {
                         await ref.watch(playerProvider).seekToPrevious();
-                        if (ref.watch(playerProvider).playing){
+                        if (ref.watch(playerProvider).playing) {
                           return;
-                        }else{
+                        } else {
                           setState(() {
                             songPlaying = !songPlaying;
                           });
@@ -365,9 +405,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     InkWell(
                       onTap: () async {
                         await ref.watch(playerProvider).seekToNext();
-                        if (ref.watch(playerProvider).playing){
+                        if (ref.watch(playerProvider).playing) {
                           return;
-                        }else{
+                        } else {
                           setState(() {
                             songPlaying = !songPlaying;
                           });
