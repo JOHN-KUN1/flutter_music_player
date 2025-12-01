@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:new_music_player/providers/loop_provider.dart';
 import 'package:new_music_player/providers/mode_provider.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:new_music_player/providers/player_provider.dart';
+import 'package:new_music_player/providers/shuffle_provider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen({super.key, required this.songIndex});
@@ -15,8 +17,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool songPlaying = true;
-  double _currentSliderValue = 0;
-  double? songD;
+  int currentLoopState = 0;
 
   void setAndPlayInitialMusic() async {
     if (ref.watch(playerProvider).audioSource == null) {
@@ -232,17 +233,35 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        ref.read(shuffleProvider.notifier).shuffleActive(!ref.watch(shuffleProvider));
+                        await ref.watch(playerProvider).setShuffleModeEnabled(ref.watch(shuffleProvider));
+                      },
                       icon: Icon(
                         Icons.shuffle,
-                        color: Colors.grey,
+                        color: ref.watch(shuffleProvider) ? Colors.lightBlue : Colors.grey,
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () async{
+                        ref.read(loopProvider.notifier).loopActive(true);
+                        currentLoopState++;
+                        if (currentLoopState == 1){
+                          await ref.watch(playerProvider).setLoopMode(LoopMode.all);
+                        }else if(currentLoopState == 2){
+                          await ref.watch(playerProvider).setLoopMode(LoopMode.one);
+                          setState(() {
+                            //
+                          });
+                        }else if (currentLoopState == 3){
+                          await ref.watch(playerProvider).setLoopMode(LoopMode.off);
+                          ref.read(loopProvider.notifier).loopActive(false);
+                          currentLoopState = 0;
+                        }
+                      },
                       icon: Icon(
-                        Icons.repeat,
-                        color: Colors.grey,
+                        currentLoopState == 2 ? Icons.repeat_one : Icons.repeat,
+                        color: ref.watch(loopProvider) ? Colors.lightBlue : Colors.grey,
                       ),
                     ),
                     // Text(
@@ -276,21 +295,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     if (snapshot.hasData) {
                       return Slider(
                         value:
-                            songD ?? snapshot.data?.inSeconds.toDouble() ?? 0.0,
+                            snapshot.data?.inSeconds.toDouble() ?? 0.0,
                         max:
                             ref
                                 .watch(playerProvider)
                                 .duration
                                 ?.inSeconds
                                 .toDouble() ??
-                            800000,
+                            800,
                         onChanged: (value) async {
                           await ref
                               .watch(playerProvider)
                               .seek(Duration(seconds: value.toInt()));
-                          setState(() {
-                            songD = snapshot.data?.inSeconds.toDouble();
-                          });
                         },
                       );
                     } else {
