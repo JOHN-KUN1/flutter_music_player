@@ -16,8 +16,9 @@ class PlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
-  bool songPlaying = true;
-  int currentLoopState = 0;
+  bool _songPlaying = true;
+  int _currentLoopState = 0;
+  var a = '';
 
   void setAndPlayInitialMusic() async {
     if (ref.watch(playerProvider).audioSource == null) {
@@ -48,6 +49,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 DefaultShuffleOrder(), // Customise the shuffle algorithm
           );
       await ref.watch(playerProvider).play();
+      // ref.watch(playerProvider).durationStream.listen((totalDuration){
+      //   a = totalDuration.toString();
+      // });
     } else {
       // Load the playlist
       if (widget.songIndex != ref.watch(playerProvider).currentIndex) {
@@ -63,6 +67,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           await ref.watch(playerProvider).play();
         }
       }
+      // ref.watch(playerProvider).durationStream.listen((totalDuration){
+      //   a = totalDuration.toString();
+      // });
     }
     // var duration = await ref.watch(playerProvider).positionStream.last;
     // songD = duration.inSeconds.toDouble();
@@ -70,7 +77,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     setAndPlayInitialMusic();
   }
@@ -228,46 +234,64 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text(
-                      '0:00',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
+                    StreamBuilder(stream: ref.watch(playerProvider).positionStream, builder: (context, snapshot) {
+                      return Text(
+                      snapshot.data == null ? Duration.zero.toString().substring(2,7) : snapshot.data.toString().substring(2,7),
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    );
+                    },),
                     IconButton(
                       onPressed: () async {
-                        ref.read(shuffleProvider.notifier).shuffleActive(!ref.watch(shuffleProvider));
-                        await ref.watch(playerProvider).setShuffleModeEnabled(ref.watch(shuffleProvider));
+                        ref
+                            .read(shuffleProvider.notifier)
+                            .shuffleActive(!ref.watch(shuffleProvider));
+                        await ref
+                            .watch(playerProvider)
+                            .setShuffleModeEnabled(ref.watch(shuffleProvider));
                       },
                       icon: Icon(
                         Icons.shuffle,
-                        color: ref.watch(shuffleProvider) ? Colors.lightBlue : Colors.grey,
+                        color: ref.watch(shuffleProvider)
+                            ? Colors.lightBlue
+                            : Colors.grey,
                       ),
                     ),
                     IconButton(
-                      onPressed: () async{
+                      onPressed: () async {
                         ref.read(loopProvider.notifier).loopActive(true);
-                        currentLoopState++;
-                        if (currentLoopState == 1){
-                          await ref.watch(playerProvider).setLoopMode(LoopMode.all);
-                        }else if(currentLoopState == 2){
-                          await ref.watch(playerProvider).setLoopMode(LoopMode.one);
+                        _currentLoopState++;
+                        if (_currentLoopState == 1) {
+                          await ref
+                              .watch(playerProvider)
+                              .setLoopMode(LoopMode.all);
+                        } else if (_currentLoopState == 2) {
+                          await ref
+                              .watch(playerProvider)
+                              .setLoopMode(LoopMode.one);
                           setState(() {
-                            //
+                            // calling this so the loop icon can change to the repeat_one icon
                           });
-                        }else if (currentLoopState == 3){
-                          await ref.watch(playerProvider).setLoopMode(LoopMode.off);
+                        } else if (_currentLoopState == 3) {
+                          await ref
+                              .watch(playerProvider)
+                              .setLoopMode(LoopMode.off);
                           ref.read(loopProvider.notifier).loopActive(false);
-                          currentLoopState = 0;
+                          _currentLoopState = 0;
                         }
                       },
                       icon: Icon(
-                        currentLoopState == 2 ? Icons.repeat_one : Icons.repeat,
-                        color: ref.watch(loopProvider) ? Colors.lightBlue : Colors.grey,
+                        _currentLoopState == 2 ? Icons.repeat_one : Icons.repeat,
+                        color: ref.watch(loopProvider)
+                            ? Colors.lightBlue
+                            : Colors.grey,
                       ),
                     ),
-                    // Text(
-                    //   '${ref.watch(playerProvider).duration.toString().substring(2,4)}:${ref.watch(playerProvider).duration.toString().substring(5,7)}',
-                    //   style: TextStyle(fontSize: 14, color: Colors.grey),
-                    // ),
+                    StreamBuilder(stream: ref.watch(playerProvider).durationStream, builder: (context, snapshot) {
+                      return Text(
+                       snapshot.data == null ? Duration.zero.toString().substring(2,7) : snapshot.data.toString().substring(2,7),
+                       style: const TextStyle(fontSize: 14, color: Colors.grey),
+                     );
+                    },)
                   ],
                 ),
               ),
@@ -278,24 +302,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   right: 20.0,
                 ),
 
-                // child: Slider(value: _currentSliderValue, onChanged: (value) {
-                //   setState(() {
-                //     ref.watch(playerProvider).positionStream
-                //     _currentSliderValue = value;
-
-                //   });
-                // },),
-
-                //TODO: MAKE IT SO THAT WHEN THE SEEK SLIDER IS MOVED AND THE MUSIC CONTINUES PLAYING 
-                //THE SEEK SLIDER ALSO ANIMATES THE PLAY PROGRESS TOO.
-                
                 child: StreamBuilder(
                   stream: ref.watch(playerProvider).positionStream,
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       return Slider(
-                        value:
-                            snapshot.data?.inSeconds.toDouble() ?? 0.0,
+                        value: snapshot.data?.inSeconds.toDouble() ?? 0.0,
                         max:
                             ref
                                 .watch(playerProvider)
@@ -310,7 +322,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         },
                       );
                     } else {
-                      return CircularProgressIndicator();
+                      return const CircularProgressIndicator();
                     }
                   },
                 ),
@@ -331,7 +343,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           return;
                         } else {
                           setState(() {
-                            songPlaying = !songPlaying;
+                            _songPlaying = !_songPlaying;
                           });
                           ref.watch(playerProvider).play();
                         }
@@ -369,12 +381,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     Expanded(
                       child: InkWell(
                         onTap: () async {
-                          songPlaying
+                          _songPlaying
                               ? ref.watch(playerProvider).pause()
                               : ref.watch(playerProvider).play();
 
                           setState(() {
-                            songPlaying = !songPlaying;
+                            _songPlaying = !_songPlaying;
                           });
                         },
                         child: Card(
@@ -399,7 +411,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 20,
                                 ),
-                                child: songPlaying
+                                child: _songPlaying
                                     ? Icon(
                                         Icons.pause,
                                         color: ref.watch(isDarkmodeProvider)
@@ -425,7 +437,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           return;
                         } else {
                           setState(() {
-                            songPlaying = !songPlaying;
+                            _songPlaying = !_songPlaying;
                           });
                           ref.watch(playerProvider).play();
                         }
