@@ -234,12 +234,20 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    StreamBuilder(stream: ref.watch(playerProvider).positionStream, builder: (context, snapshot) {
-                      return Text(
-                      snapshot.data == null ? Duration.zero.toString().substring(2,7) : snapshot.data.toString().substring(2,7),
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    );
-                    },),
+                    StreamBuilder(
+                      stream: ref.watch(playerProvider).positionStream,
+                      builder: (context, snapshot) {
+                        return Text(
+                          snapshot.data == null
+                              ? Duration.zero.toString().substring(2, 7)
+                              : snapshot.data.toString().substring(2, 7),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                    ),
                     IconButton(
                       onPressed: () async {
                         ref
@@ -280,18 +288,30 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         }
                       },
                       icon: Icon(
-                        _currentLoopState == 2 ? Icons.repeat_one : Icons.repeat,
+                        _currentLoopState == 2
+                            ? Icons.repeat_one
+                            : Icons.repeat,
                         color: ref.watch(loopProvider)
                             ? Colors.lightBlue
                             : Colors.grey,
                       ),
                     ),
-                    StreamBuilder(stream: ref.watch(playerProvider).durationStream, builder: (context, snapshot) {
-                      return Text(
-                       snapshot.data == null ? Duration.zero.toString().substring(2,7) : snapshot.data.toString().substring(2,7),
-                       style: const TextStyle(fontSize: 14, color: Colors.grey),
-                     );
-                    },)
+                    StreamBuilder(
+                      stream: ref.watch(playerProvider).durationStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.data == null) {
+                          return const SizedBox(width: 18.0,height: 18.0,child: CircularProgressIndicator(color: Colors.lightBlue,));
+                        } else {
+                          return Text(
+                            snapshot.data.toString().substring(2, 7),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
